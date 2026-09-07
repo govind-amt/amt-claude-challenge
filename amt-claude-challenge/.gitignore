@@ -1,0 +1,13 @@
+# Local Claude Code state
+.claude/settings.local.json
+
+# Env / secrets — never commit these
+.env
+*.local
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Node (in case anyone scaffolds an example project)
+node_modules/
