@@ -1,0 +1,47 @@
+{
+  "challenge": "AMT Claude Upskilling Challenge",
+  "deadline": "2026-09-21",
+  "note": "Update this file as PRs are merged. Set course/linkedin/artifact to true and fill completedDate (YYYY-MM-DD) when a participant finishes all three.",
+  "participants": [
+    {
+      "name": "dev-one",
+      "track": "A",
+      "course": true,
+      "linkedin": true,
+      "artifact": true,
+      "completedDate": "2026-09-10"
+    },
+    {
+      "name": "dev-two",
+      "track": "A",
+      "course": true,
+      "linkedin": true,
+      "artifact": false,
+      "completedDate": null
+    },
+    {
+      "name": "dev-three",
+      "track": "B",
+      "course": true,
+      "linkedin": false,
+      "artifact": false,
+      "completedDate": null
+    },
+    {
+      "name": "dev-four",
+      "track": "B",
+      "course": true,
+      "linkedin": true,
+      "artifact": true,
+      "completedDate": "2026-09-12"
+    },
+    {
+      "name": "dev-five",
+      "track": "A",
+      "course": false,
+      "linkedin": false,
+      "artifact": false,
+      "completedDate": null
+    }
+  ]
+}

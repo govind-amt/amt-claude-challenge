@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMT Claude Challenge — Leaderboard</title>
+<style>
+  :root {
+    --bg:        #12151C;
+    --surface:   #1A1F29;
+    --surface-2: #20263180;
+    --line:      #2A313D;
+    --text:      #E8E6E0;
+    --muted:     #868F9F;
+    --dim:       #4A5262;
+    --amber:     #E0A73E;
+    --pass:      #5FB878;
+    --track-a:   #56B6C2;
+    --track-b:   #A78BDB;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    padding: clamp(1rem, 4vw, 3rem);
+    min-height: 100vh;
+  }
+  .mono {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+
+  /* Header */
+  header { margin-bottom: 2rem; }
+  .prompt {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.9rem;
+    letter-spacing: 0.01em;
+  }
+  .prompt .sig { color: var(--pass); }
+  .caret {
+    display: inline-block;
+    width: 0.55em; height: 1.05em;
+    background: var(--amber);
+    margin-left: 2px;
+    vertical-align: -0.18em;
+    animation: blink 1.1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  h1 {
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+    font-weight: 640;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .sub {
+    margin-top: 0.6rem;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+  .sub b { color: var(--text); font-weight: 600; }
+  .deadline { color: var(--amber); }
+
+  /* Filter */
+  .filters {
+    display: flex;
+    gap: 0.4rem;
+    margin: 1.8rem 0 1rem;
+    flex-wrap: wrap;
+  }
+  .filter {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    padding: 0.4rem 0.85rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+  }
+  .filter:hover { color: var(--text); border-color: var(--dim); }
+  .filter[aria-pressed="true"] {
+    color: var(--bg);
+    background: var(--text);
+    border-color: var(--text);
+    font-weight: 600;
+  }
+  .filter:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  /* Board */
+  .board { display: flex; flex-direction: column; }
+  .col-head {
+    display: grid;
+    grid-template-columns: 2.2rem 1fr auto 5.2rem;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0 0.5rem 0.6rem;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    color: var(--dim);
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--line);
+  }
+  .col-head .stages-h { text-align: center; }
+  .col-head .pts-h { text-align: right; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 2.2rem 1fr auto 5.2rem;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.85rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .row.leader {
+    background: linear-gradient(90deg, #E0A73E14, transparent 65%);
+    border-left: 2px solid var(--amber);
+    padding-left: calc(0.5rem - 2px);
+  }
+  .rank {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.95rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  .row.leader .rank { color: var(--amber); font-weight: 700; }
+
+  .who { min-width: 0; }
+  .name {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .track {
+    display: inline-block;
+    margin-top: 0.25rem;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    padding: 0.08rem 0.4rem;
+    border-radius: 3px;
+    border: 1px solid currentColor;
+  }
+  .track.A { color: var(--track-a); }
+  .track.B { color: var(--track-b); }
+  .track .lbl { opacity: 0.85; }
+
+  /* Pipeline stages */
+  .stages { display: flex; gap: 0.9rem; align-items: center; }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.28rem;
+    width: 2.7rem;
+  }
+  .dot {
+    width: 1.15rem; height: 1.15rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--dim);
+    font-size: 0.7rem;
+    color: var(--dim);
+    line-height: 1;
+  }
+  .stage.done .dot {
+    border-color: var(--pass);
+    color: var(--pass);
+    background: #5FB87814;
+  }
+  .stage-lbl {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.6rem;
+    color: var(--dim);
+    letter-spacing: 0.02em;
+  }
+  .stage.done .stage-lbl { color: var(--muted); }
+
+  .pts {
+    text-align: right;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .pts .n { font-size: 1.15rem; font-weight: 700; }
+  .pts .max { font-size: 0.72rem; color: var(--dim); }
+  .row.leader .pts .n { color: var(--amber); }
+
+  .empty {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--muted);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+  }
+
+  footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    color: var(--dim);
+    font-size: 0.78rem;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 560px) {
+    .col-head, .row { grid-template-columns: 1.7rem 1fr auto; }
+    .col-head .stages-h { display: none; }
+    .pts { display: none; }
+    .col-head .pts-h { display: none; }
+    .stages { gap: 0.55rem; }
+    .stage { width: auto; }
+    .stage-lbl { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .caret { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="prompt"><span class="sig">amt@challenge</span>:~$ cat leaderboard --live<span class="caret"></span></div>
+    <h1>Claude Upskilling Challenge</h1>
+    <p class="sub" id="summary">Loading…</p>
+  </header>
+
+  <div class="filters" role="group" aria-label="Filter by track">
+    <button class="filter" data-track="all" aria-pressed="true">All</button>
+    <button class="filter" data-track="A" aria-pressed="false">Track A · Claude Code</button>
+    <button class="filter" data-track="B" aria-pressed="false">Track B · Web</button>
+  </div>
+
+  <div class="board">
+    <div class="col-head">
+      <span>#</span>
+      <span>developer</span>
+      <span class="stages-h">course · post · build</span>
+      <span class="pts-h">points</span>
+    </div>
+    <div id="rows"></div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+  // Points model: course 40, linkedin 20, artifact 40 = 100
+  const PTS = { course: 40, linkedin: 20, artifact: 40 };
+  const STAGES = [
+    { key: "course",   glyph: "◇", label: "course" },
+    { key: "linkedin", glyph: "in", label: "post" },
+    { key: "artifact", glyph: "{}", label: "build" }
+  ];
+
+  // Fallback sample data so the page renders even without leaderboard.json
+  const SAMPLE = {
+    challenge: "AMT Claude Upskilling Challenge",
+    deadline: "2026-09-21",
+    participants: [
+      { name: "dev-one",   track: "A", course: true,  linkedin: true,  artifact: true,  completedDate: "2026-09-10" },
+      { name: "dev-two",   track: "A", course: true,  linkedin: true,  artifact: false, completedDate: null },
+      { name: "dev-three", track: "B", course: true,  linkedin: false, artifact: false, completedDate: null },
+      { name: "dev-four",  track: "B", course: true,  linkedin: true,  artifact: true,  completedDate: "2026-09-12" },
+      { name: "dev-five",  track: "A", course: false, linkedin: false, artifact: false, completedDate: null }
+    ]
+  };
+
+  let DATA = null;
+  let filter = "all";
+
+  const score = p => STAGES.reduce((s, st) => s + (p[st.key] ? PTS[st.key] : 0), 0);
+
+  function ordered(list) {
+    // Stable display order: score desc, then finish date, then name.
+    // (Order within an equal-score group only affects listing, not rank number.)
+    return [...list].sort((a, b) => {
+      const d = score(b) - score(a);
+      if (d !== 0) return d;
+      const ac = a.completedDate || "9999";
+      const bc = b.completedDate || "9999";
+      if (ac !== bc) return ac < bc ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  function render() {
+    const all = DATA.participants;
+    const list = ordered(filter === "all" ? all : all.filter(p => p.track === filter));
+    const rows = document.getElementById("rows");
+    rows.innerHTML = "";
+
+    if (!list.length) {
+      rows.innerHTML = '<div class="empty">No developers in this track yet. Be the first — open a PR.</div>';
+    }
+
+    // Standard competition ranking: equal scores share a rank number.
+    let prevScore = null, prevRank = 0;
+    const topScore = list.length ? score(list[0]) : 0;
+
+    list.forEach((p, i) => {
+      const s = score(p);
+      const r = (s === prevScore) ? prevRank : (i + 1);
+      prevScore = s; prevRank = r;
+
+      // Everyone sharing the top rank is a co-leader (only if they've actually scored).
+      const isLeader = s === topScore && s > 0;
+      const row = document.createElement("div");
+      row.className = "row" + (isLeader ? " leader" : "");
+
+      const stages = STAGES.map(st => {
+        const done = !!p[st.key];
+        const mark = done ? "✓" : st.glyph;
+        return `<div class="stage ${done ? "done" : ""}">
+                  <span class="dot mono">${mark}</span>
+                  <span class="stage-lbl">${st.label}</span>
+                </div>`;
+      }).join("");
+
+      row.innerHTML = `
+        <div class="rank">${r}</div>
+        <div class="who">
+          <div class="name">${escapeHtml(p.name)}</div>
+          <span class="track ${p.track}"><span class="lbl">track</span> ${p.track}</span>
+        </div>
+        <div class="stages">${stages}</div>
+        <div class="pts"><span class="n">${s}</span><span class="max">/100</span></div>
+      `;
+      rows.appendChild(row);
+    });
+
+    // Summary line
+    const done = all.filter(p => score(p) === 100).length;
+    document.getElementById("summary").innerHTML =
+      `<b>${all.length}</b> developers registered · <b>${done}</b> completed · ` +
+      `<span class="deadline">deadline ${fmtDate(DATA.deadline)}</span>`;
+
+    document.getElementById("foot").innerHTML =
+      `points: course +40 · linkedin +20 · build +40 &nbsp;|&nbsp; ` +
+      `update <a href="./leaderboard.json">leaderboard.json</a> to change standings`;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "TBD";
+    const d = new Date(iso + "T00:00:00");
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  document.querySelectorAll(".filter").forEach(btn => {
+    btn.addEventListener("click", () => {
+      filter = btn.dataset.track;
+      document.querySelectorAll(".filter").forEach(b =>
+        b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+      render();
+    });
+  });
+
+  // Load real data if present, else sample
+  fetch("./leaderboard.json", { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(d => { DATA = d; render(); })
+    .catch(() => { DATA = SAMPLE; render(); });
+</script>
+</body>
+</html>
